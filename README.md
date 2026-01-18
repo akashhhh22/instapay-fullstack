@@ -1,249 +1,217 @@
-⚡ InstaPay — Gasless Stablecoin Transfers on Shardeum
+# ⚡ InstaPay — Gasless Stablecoin Transfers on Shardeum
 
-InstaPay is a full-stack Web3 application that enables gasless USDC transfers on the Shardeum EVM Testnet.
-Users can send stablecoins without holding ETH — a relayer covers gas fees, while INCO FHE ensures privacy and a confidential risk engine protects users from malicious destinations.
+**Send MockUSDC on Shardeum Testnet without holding ETH.**  
+*A relayer pays gas, while a confidential risk engine (powered by INCO FHE) blocks malicious destinations.*
 
-This repository represents the entire ecosystem:
+---
 
-React Frontend 
-        ↓
-Express Backend (Risk Engine)
-        ↓
-Relayer Wallet (Pays Gas)
-        ↓
-MockUSDC Contract on Shardeum
+## ✨ **Key Features**
 
-✨ Features
+- 🔌 **MetaMask wallet integration**  
+- 🌐 **Automatic Shardeum network enforcement**  
+- 🛂 **ERC-20 approval flow** (allowance to relayer)  
+- 🧠 **Confidential risk assessment**: LOW / MEDIUM / HIGH  
+- ⛽ **Gasless transfers** via relayer (`transferFrom`)  
+- 🔁 **Retry-safe backend** + RPC failure handling  
+- 🎉 **Modern UI** (animations, overlays & confetti)  
+- 🚀 **Deployable** on Vercel (Frontend) + Render (Backend)  
 
-🔌 MetaMask wallet integration
+---
 
-🌐 Automatic Shardeum network enforcement
+## 🧩 **How It Works**
 
-🛂 ERC20 approval flow
+### **Frontend Flow (React + Tailwind)**
+1. User connects MetaMask
+2. App enforces Shardeum Testnet (Chain ID: 8119)
+3. User approves MockUSDC spending to relayer address
 
-🧠 Confidential risk assessment (LOW / MEDIUM / HIGH)
+### **Send Transaction**
+recipient + amount → ENCRYPTED via INCO FHE → POST /api/send
 
-⛽ Gasless transfers via relayer
-
-🔁 Retry-safe backend with RPC failure handling
-
-🎉 Modern UI with animations, overlays & confetti
-
-🚀 Production-ready for Vercel + Render
-
-🧱 Project Structure
-instapay/
-├─ backend/
-│  ├─ package.json
-│  └─ src/
-│     ├─ index.js
-│     ├─ chains.js
-│     ├─ config.js
-│     ├─ fhe.js
-│     ├─ abi/MockUSDC.js
-│     ├─ routes/transfer.js
-│     └─ services/
-│        ├─ provider.js
-│        ├─ relayer.js
-│        ├─ riskAssessment.js
-│        └─ transferService.js
-│
-└─ frontend/
-   ├─ package.json
-   ├─ tailwind.config.js
-   ├─ postcss.config.js
-   ├─ public/
-   └─ src/
-      ├─ App.js
-      ├─ fhe.js
-      ├─ index.js
-      └─ styles
-
-🔐 Architecture
-Frontend (React + Tailwind)
-
-User connects MetaMask
-
-App ensures Shardeum Testnet
-
-User approves USDC to the relayer address
-
-On “Send”:
-
-recipient and amount are encrypted via INCO FHE
-
-POST request sent to backend:
-
+**Example Payload:**
+```json
 {
   "sender": "0xUser",
-  "recipient": "0xEncrypted",
-  "amount": "0xEncrypted"
+  "recipient": "0xEncryptedRecipient",
+  "amount": "0xEncryptedAmount"
 }
+```
 
-Backend (Express + Ethers)
+### **Backend Flow (Express + Ethers v6)**
+1. **DECRYPT** fields using INCO
+2. **RISK ASSESSMENT** (LOW/MED/High)
+3. **BLOCK** HIGH-RISK destinations
+4. Relayer executes: `transferFrom(sender, recipient, amount)`
+5. Returns **tx hash + explorer link + risk result**
 
-Decrypts fields using INCO
+---
 
-Runs confidential risk assessment
+## 🌍 **Network Details**
 
-Blocks HIGH-RISK destinations
+| **Item** | **Value** |
+|----------|-----------|
+| **Network** | Shardeum EVM Testnet |
+| **Chain ID** | `8119` |
+| **MockUSDC** | `0x1D782Be54c51c95c60088Ea8f7069b51F8E84142` |
+| **Explorer** | [explorer-mezame.shardeum.org](https://explorer-mezame.shardeum.org) |
 
-Uses relayer wallet to execute:
+---
 
-transferFrom(sender, recipient, amount)
+## 🧱 **Project Structure**
 
+```
+instapay/
+├── backend/
+│   ├── package.json
+│   └── src/
+│       ├── index.js ⭐
+│       ├── chains.js
+│       ├── config.js
+│       ├── fhe.js (INCO)
+│       ├── abi/MockUSDC.js
+│       └── routes/transfer.js
+└── frontend/
+    ├── package.json
+    ├── tailwind.config.js
+    └── src/
+        ├── App.js ⭐
+        ├── fhe.js
+        └── index.js
+```
 
-Returns transaction hash & explorer link
+---
 
-🌍 Supported Network
+## 🔧 **Environment Variables**
 
-Currently hard-pinned to:
-
-Shardeum EVM Testnet
-
-Chain ID: 8119
-
-USDC (Mock): 0x1D782Be54c51c95c60088Ea8f7069b51F8E84142
-
-Explorer: https://explorer-mezame.shardeum.org
-
-🔧 Environment Variables
-Backend (backend/.env)
+### **Backend (.env)**
+```env
 PORT=3000
 RELAYER_PRIVATE_KEY=0xYOUR_RELAYER_PRIVATE_KEY
 SHARDEUM_RPC=https://your-shardeum-rpc
+```
 
-Frontend (frontend/.env)
+### **Frontend (.env)**
+```env
 REACT_APP_API_URL=https://your-backend.onrender.com
+```
 
-📡 API
-POST /api/send
+---
 
-Request:
+## 📡 **API Reference**
 
+### **`POST /api/send`**
+
+**Request:**
+```json
 {
   "sender": "0xUserAddress",
   "recipient": "0xEncryptedRecipient",
   "amount": "0xEncryptedAmount"
 }
+```
 
-
-Success Response:
-
+**✅ Success Response:**
+```json
 {
   "success": true,
-  "network": "Shardeum EVM Testnet",
-  "chainId": 8119,
   "txHash": "0x...",
   "etherscanTx": "https://explorer-mezame.shardeum.org/tx/0x...",
-  "riskAssessment": {
-    "level": "LOW",
-    "checked": true
-  }
+  "riskAssessment": { "level": "LOW", "checked": true }
 }
+```
 
-
-Blocked (High Risk):
-
+**❌ Blocked (High Risk):**
+```json
 {
   "error": "Transaction blocked by security layer",
   "riskLevel": "HIGH",
-  "reason": "Address is flagged in confidential blacklist"
+  "reason": "Address flagged in confidential blacklist"
 }
+```
 
-🧠 Risk Engine
+---
 
-The backend runs a confidential risk layer:
+## 🧠 **Risk Engine**
 
-HIGH – Blacklisted addresses → ❌ Blocked
+| **Risk Level** | **Action** | **Description** |
+|----------------|------------|-----------------|
+| **HIGH** | ❌ **BLOCKED** | Blacklisted addresses |
+| **MEDIUM** | ⚠️ **WARNING** | Allowed with caution |
+| **LOW** | ✅ **SAFE** | Proceed normally |
 
-MEDIUM – Suspicious patterns → ⚠ Allowed with warning
+*Fully server-side, protected by FHE boundaries*
 
-LOW – Safe → ✅ Proceed
+---
 
-This logic is fully server-side and protected behind FHE boundaries.
+## 🧪 **Local Setup**
 
-🚀 Deployment
-Backend (Render)
-
-Create a new Web Service
-
-Set root to backend/
-
-Build Command:
-
-npm install
-
-
-Start Command:
-
-npm start
-
-
-Add environment variables
-
-Health endpoint:
-
-GET /health → { "status": "ok" }
-
-Frontend (Vercel)
-
-Import frontend/ directory
-
-Add environment variable:
-
-REACT_APP_API_URL=https://your-backend.onrender.com
-
-
-Deploy
-
-🛡️ Security Notes
-
-Users never expose private keys
-
-Backend never stores user secrets
-
-Relayer only operates on approved allowances
-
-INCO FHE protects sensitive fields
-
-High-risk addresses are blocked server-side
-
-🧪 Local Development (Optional)
-# Backend
+### **Backend**
+```bash
 cd backend
 npm install
 npm start
+```
 
-# Frontend
+### **Frontend**
+```bash
 cd frontend
 npm install
 npm start
+```
 
-🧭 Roadmap
+---
 
-Multi-chain routing (cheapest gas)
+## 🚀 **Production Deployment**
 
-On-chain encrypted blacklist
+### **Backend → Render.com**
+```
+Root Directory: backend/
+Build Command: npm install
+Start Command: npm start
+Health Check: GET /health
+```
 
-Relayer balance monitoring
+### **Frontend → Vercel**
+```
+Project Root: frontend/
+Environment Variable: REACT_APP_API_URL=https://your-backend.onrender.com
+Deploy: Click Deploy 🚀
+```
 
-Transaction history dashboard
+---
 
-Account abstraction support
+## 🛡️ **Security Architecture**
 
-❤️ Credits
+| ✅ **Protected** | ❌ **Never Exposed** |
+|------------------|---------------------|
+| FHE Encryption | User Private Keys |
+| Server Risk Check | User Secrets |
+| Allowance-only Relayer | Direct Fund Access |
 
-Built with:
+---
 
-React + Tailwind
+## 🧭 **Roadmap**
 
-Ethers v6
+- [ ] **Multi-chain routing** (cheapest gas optimization)
+- [ ] **On-chain encrypted blacklist**
+- [ ] **Relayer balance monitoring dashboard**
+- [ ] **Transaction history tracking**
+- [ ] **Account Abstraction support**
 
-Express
+---
 
-INCO SDK
+## ❤️ **Tech Stack**
 
-Shardeum
+```
+Frontend: React + Tailwind CSS
+Backend: Express.js + Ethers v6
+Security: INCO FHE (Fully Homomorphic Encryption)
+Network: Shardeum EVM Testnet
+Deployment: Vercel + Render
+```
 
-InstaPay — Send stablecoins without gas, friction, or fear.
+---
+
+**⚡ InstaPay — Gasless. Secure. Instant.**
+
+*Send stablecoins without gas, friction, or fear.*
